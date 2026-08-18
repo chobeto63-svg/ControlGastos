@@ -126,6 +126,8 @@
   .budget-msg{font-size:11px;margin:6px 0 0;}
   .budget-msg.budget-near{color:#C1440E;}
   .budget-msg.budget-over{color:#D64550;font-weight:600;}
+  .budget-edit{background:none;border:none;color:var(--muted);cursor:pointer;font-size:11px;padding:0 0 0 4px;}
+  .limit-line{text-align:center;color:var(--muted);font-size:11px;margin:0 0 14px;}
   .torn{
     position:absolute;left:0;right:0;bottom:-1px;height:14px;
     background-image:linear-gradient(135deg, transparent 50%, var(--paper) 50%),linear-gradient(-135deg, transparent 50%, var(--paper) 50%);
@@ -182,6 +184,7 @@
     <span class="month-label" id="monthLabel"></span>
     <button id="nextMonth" aria-label="Mes siguiente">&#8594;</button>
   </div>
+  <p class="limit-line">limite mensual: <span id="limitDisplay"></span> <button class="budget-edit" onclick="editBudgetLimit()" aria-label="Editar limite">&#9998;</button></p>
 
   <div class="panel">
     <div class="field-row">
@@ -232,7 +235,33 @@
   ];
   var MESES = ["ENERO","FEBRERO","MARZO","ABRIL","MAYO","JUNIO","JULIO","AGOSTO","SEPTIEMBRE","OCTUBRE","NOVIEMBRE","DICIEMBRE"];
   var STORAGE_KEY = 'control-gastos-v1';
-  var BUDGET_LIMIT = 275;
+  var LIMIT_KEY = 'control-gastos-limit';
+  var BUDGET_LIMIT = loadBudgetLimit();
+
+  function loadBudgetLimit(){
+    try{
+      var raw = localStorage.getItem('control-gastos-limit');
+      var n = parseFloat(raw);
+      return (n && n > 0) ? n : 275;
+    }catch(e){ return 275; }
+  }
+  function saveBudgetLimit(n){
+    try{ localStorage.setItem(LIMIT_KEY, String(n)); return true; }catch(e){ return false; }
+  }
+  function editBudgetLimit(){
+    var current = BUDGET_LIMIT;
+    var input = window.prompt('Ingresa tu limite de presupuesto mensual (en dolares):', String(current));
+    if (input === null) return;
+    var value = parseFloat(String(input).replace(',', '.'));
+    if (!value || value <= 0){
+      window.alert('Ingresa un monto valido, mayor a 0.');
+      return;
+    }
+    BUDGET_LIMIT = value;
+    saveBudgetLimit(value);
+    renderAll();
+  }
+  window.editBudgetLimit = editBudgetLimit;
 
   function catInfo(id){
     for (var i=0;i<CATEGORIES.length;i++) if (CATEGORIES[i].id===id) return CATEGORIES[i];
@@ -361,7 +390,7 @@
       budgetMsg = '<p class="budget-msg budget-near">Vas en el '+Math.round(pct)+'% de tu limite mensual de $'+fmt(BUDGET_LIMIT)+'.</p>';
     }
     var budgetBlock = '<div class="budget-bar">'+
-      '<div class="budget-label"><span>Presupuesto del mes</span><span>$'+fmt(total)+' / $'+fmt(BUDGET_LIMIT)+'</span></div>'+
+      '<div class="budget-label"><span>Presupuesto del mes</span><span>$'+fmt(total)+' / $'+fmt(BUDGET_LIMIT)+' <button class="budget-edit" onclick="editBudgetLimit()" aria-label="Editar limite">&#9998;</button></span></div>'+
       '<div class="budget-track"><div class="budget-fill" style="width:'+pct+'%;background:'+barColor+'"></div></div>'+
       budgetMsg +
       '</div>';
@@ -405,6 +434,8 @@
     renderMonthLabel();
     renderReceipt();
     renderBreakdown();
+    var limitDisplay = document.getElementById('limitDisplay');
+    if (limitDisplay) limitDisplay.textContent = '$' + fmt(BUDGET_LIMIT);
   }
 
   function escapeHtml(s){
