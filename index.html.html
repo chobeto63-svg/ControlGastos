@@ -1,0 +1,411 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+<title>Control de Gastos</title>
+<meta name="theme-color" content="#24231F" />
+<meta name="description" content="Tu recibo personal de gastos, mes a mes." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%2324231F'/%3E%3Ccircle cx='50' cy='50' r='40' fill='none' stroke='%23C1440E' stroke-width='4' stroke-dasharray='4 4'/%3E%3Ctext x='50' y='66' font-family='Georgia,serif' font-weight='700' font-size='48' fill='%23C1440E' text-anchor='middle'%3E%24%3C/text%3E%3C/svg%3E" />
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%2324231F'/%3E%3Ccircle cx='50' cy='50' r='40' fill='none' stroke='%23C1440E' stroke-width='4' stroke-dasharray='4 4'/%3E%3Ctext x='50' y='66' font-family='Georgia,serif' font-weight='700' font-size='48' fill='%23C1440E' text-anchor='middle'%3E%24%3C/text%3E%3C/svg%3E" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --paper:#EAE5D6;
+    --card:#FDFCF9;
+    --ink:#24231F;
+    --ink-soft:#5B564A;
+    --muted:#8A8574;
+    --line:#D8D3C4;
+    --accent:#C1440E;
+    --panel:#24231F;
+    --panel-border:#45443C;
+    --panel-text:#B7B2A2;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    min-height:100vh;
+    background:var(--paper);
+    background-image:radial-gradient(circle at 1px 1px, rgba(0,0,0,0.05) 1px, transparent 0);
+    background-size:14px 14px;
+    font-family:'IBM Plex Mono', monospace;
+    color:var(--ink);
+    display:flex;
+    justify-content:center;
+    padding:28px 14px 60px;
+  }
+  .wrap{width:100%;max-width:420px;}
+  header{text-align:center;margin-bottom:18px;}
+  .logo{width:52px;height:52px;transform:rotate(-6deg);margin-bottom:8px;}
+  h1{
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:700;
+    font-size:22px;
+    letter-spacing:.06em;
+    margin:0 0 4px;
+  }
+  .subtitle{color:var(--muted);font-size:12px;letter-spacing:.04em;margin:0;}
+
+  .month-nav{
+    display:flex;align-items:center;justify-content:space-between;
+    margin:18px 4px 14px;
+  }
+  .month-nav button{
+    background:none;border:1px solid #C9C3B5;border-radius:6px;
+    color:var(--ink-soft);padding:5px 9px;cursor:pointer;font-size:14px;
+  }
+  .month-label{
+    font-family:'Space Grotesk', sans-serif;font-weight:600;font-size:14px;
+    letter-spacing:.08em;
+  }
+
+  .panel{
+    background:var(--panel);border-radius:10px;padding:14px;
+    margin-bottom:18px;box-shadow:0 4px 14px rgba(0,0,0,.18);
+  }
+  .field-row{display:flex;gap:8px;margin-bottom:8px;}
+  input[type="text"], input[type="number"]{
+    flex:1;background:#34332C;border:1px solid var(--panel-border);
+    border-radius:6px;color:#FDFCF9;padding:9px 10px;font-size:13px;
+    font-family:'IBM Plex Mono', monospace;outline:none;width:100%;
+  }
+  input::placeholder{color:#8B8776;}
+  .amount-input{max-width:90px;text-align:right;flex:0 0 90px;}
+
+  .categories{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;}
+  .cat-chip{
+    display:flex;align-items:center;gap:4px;padding:5px 9px;border-radius:999px;
+    border:1px solid var(--panel-border);background:transparent;color:var(--panel-text);
+    font-size:11px;font-family:'IBM Plex Mono', monospace;cursor:pointer;
+  }
+  .cat-chip svg{width:12px;height:12px;}
+  .cat-chip.active{color:#FDFCF9;border-color:transparent;}
+
+  .btn-row{display:flex;gap:8px;}
+  .btn-clear{
+    flex:0 0 90px;background:transparent;color:var(--panel-text);
+    border:1px solid var(--panel-border);border-radius:6px;padding:10px 0;
+    font-family:'IBM Plex Mono', monospace;font-size:12px;cursor:pointer;
+  }
+  .btn-submit{
+    flex:1;background:var(--accent);color:#FDFCF9;border:none;border-radius:6px;
+    padding:10px 0;font-family:'Space Grotesk', sans-serif;font-weight:600;
+    font-size:13px;letter-spacing:.06em;cursor:pointer;
+  }
+  .form-error{color:var(--accent);font-size:12px;text-align:center;margin:0 0 10px;}
+
+  .receipt{
+    background:var(--card);border-radius:4px 4px 0 0;
+    box-shadow:0 10px 28px rgba(0,0,0,.16);padding:22px 20px 26px;position:relative;
+  }
+  .receipt .empty{text-align:center;color:var(--muted);font-size:13px;padding:20px 0;}
+  .expense-row{
+    display:flex;align-items:center;gap:8px;border-bottom:1px dashed var(--line);padding:9px 0;
+  }
+  .expense-row svg{width:14px;height:14px;flex-shrink:0;}
+  .expense-info{flex:1;min-width:0;}
+  .expense-desc{font-size:13px;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .expense-meta{font-size:10px;color:#A9A392;}
+  .expense-amount{font-size:13px;font-weight:600;color:var(--ink);}
+  .expense-del{background:none;border:none;color:#C9C3B5;cursor:pointer;padding:2px;display:flex;}
+  .barcode{
+    height:22px;margin:14px 0 10px;
+    background-image:repeating-linear-gradient(90deg,#24231F 0px,#24231F 2px,transparent 2px,transparent 3px,#24231F 3px,#24231F 4px,transparent 4px,transparent 6px,#24231F 6px,#24231F 8px,transparent 8px,transparent 9px);
+    background-repeat:repeat-x;opacity:.75;
+  }
+  .total-row{display:flex;justify-content:space-between;align-items:baseline;}
+  .total-label{font-family:'Space Grotesk', sans-serif;font-weight:700;font-size:14px;letter-spacing:.06em;}
+  .total-amount{font-family:'Space Grotesk', sans-serif;font-weight:700;font-size:20px;}
+  .torn{
+    position:absolute;left:0;right:0;bottom:-1px;height:14px;
+    background-image:linear-gradient(135deg, transparent 50%, var(--paper) 50%),linear-gradient(-135deg, transparent 50%, var(--paper) 50%);
+    background-size:14px 14px;background-position:bottom;background-repeat:repeat-x;
+  }
+
+  .breakdown{margin-top:34px;}
+  .breakdown h2{
+    font-family:'Space Grotesk', sans-serif;font-weight:600;font-size:13px;
+    letter-spacing:.08em;margin:0 0 10px;
+  }
+  .cat-bar-row{margin-bottom:9px;}
+  .cat-bar-label{display:flex;justify-content:space-between;font-size:11px;color:var(--ink-soft);margin-bottom:3px;}
+  .cat-bar-label .name{display:flex;align-items:center;gap:5px;}
+  .cat-bar-label svg{width:12px;height:12px;}
+  .cat-bar-track{height:6px;background:#DFDACB;border-radius:3px;overflow:hidden;}
+  .cat-bar-fill{height:100%;border-radius:3px;}
+
+  .btn-print{
+    display:block;width:100%;background:transparent;color:var(--ink-soft);
+    border:1px solid #C9C3B5;border-radius:6px;padding:9px 0;margin-bottom:16px;
+    font-family:'IBM Plex Mono', monospace;font-size:12px;cursor:pointer;
+  }
+  .print-only-title{display:none;}
+
+  @media print{
+    body{background:#fff;padding:0;display:block;}
+    header, .month-nav, .panel, .btn-print{display:none !important;}
+    .wrap{max-width:100%;}
+    .receipt{box-shadow:none;padding:0;}
+    .torn{display:none;}
+    .print-only-title{
+      display:block;font-family:'Space Grotesk', sans-serif;font-size:18px;
+      letter-spacing:.06em;margin:0 0 14px;
+    }
+    .breakdown{margin-top:24px;page-break-inside:avoid;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <svg class="logo" viewBox="0 0 100 100">
+      <circle cx="50" cy="50" r="46" fill="none" stroke="#C1440E" stroke-width="3" stroke-dasharray="4 4"/>
+      <circle cx="50" cy="50" r="37" fill="none" stroke="#C1440E" stroke-width="1.5"/>
+      <text x="50" y="63" font-family="Georgia, serif" font-weight="700" font-size="38" fill="#C1440E" text-anchor="middle">$</text>
+    </svg>
+    <h1>CONTROL DE GASTOS</h1>
+    <p class="subtitle">tu recibo personal, mes a mes</p>
+  </header>
+
+  <div class="month-nav">
+    <button id="prevMonth" aria-label="Mes anterior">&#8592;</button>
+    <span class="month-label" id="monthLabel"></span>
+    <button id="nextMonth" aria-label="Mes siguiente">&#8594;</button>
+  </div>
+
+  <div class="panel">
+    <div class="field-row">
+      <input type="text" id="descInput" placeholder="Descripcion (ej. cemento)" />
+      <input type="text" inputmode="decimal" id="amountInput" class="amount-input" placeholder="0.00" />
+    </div>
+    <div class="categories" id="categories"></div>
+    <p class="form-error" id="formError" style="display:none;"></p>
+    <div class="btn-row">
+      <button class="btn-clear" id="clearBtn" type="button">Borrar</button>
+      <button class="btn-submit" id="submitBtn" type="button">INGRESAR GASTO</button>
+    </div>
+  </div>
+
+  <button class="btn-print" id="printBtn" type="button">&#128424; Imprimir detalle del mes</button>
+
+  <div id="printArea">
+    <h2 class="print-only-title" id="printTitle"></h2>
+    <div class="receipt" id="receipt"></div>
+
+    <div class="breakdown" id="breakdown" style="display:none;">
+      <h2>POR CATEGORIA</h2>
+      <div id="breakdownList"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var ICONS = {
+    comida: '<path d="M4 2v6a2 2 0 0 0 4 0V2M6 2v18M15 2c-1.7 0-3 2-3 6s1.3 6 3 6v6" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round"/>',
+    transporte: '<rect x="2" y="10" width="20" height="7" rx="2" stroke="currentColor" stroke-width="1.8" fill="none"/><circle cx="7" cy="19" r="2" stroke="currentColor" stroke-width="1.8" fill="none"/><circle cx="17" cy="19" r="2" stroke="currentColor" stroke-width="1.8" fill="none"/><path d="M4 10l2-5h12l2 5" stroke="currentColor" stroke-width="1.8" fill="none"/>',
+    vivienda: '<path d="M3 11l9-7 9 7" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round"/><path d="M5 10v9h14v-9" stroke="currentColor" stroke-width="1.8" fill="none"/>',
+    servicios: '<path d="M13 2 4 14h6l-1 8 9-12h-6l1-8z" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linejoin="round"/>',
+    ocio: '<rect x="3" y="6" width="18" height="14" rx="1.5" stroke="currentColor" stroke-width="1.8" fill="none"/><path d="M3 10h18M8 6v4M15 6v4" stroke="currentColor" stroke-width="1.6"/>',
+    salud: '<path d="M12 21s-7-4.4-9.5-9C.7 8.4 2.6 4 6.7 4 9 4 11 5.3 12 7c1-1.7 3-3 5.3-3 4.1 0 6 4.4 4.2 8-2.5 4.6-9.5 9-9.5 9z" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linejoin="round"/><path d="M6 12h3l1.5-3L13 15l1.5-3H18" stroke="currentColor" stroke-width="1.4" fill="none"/>',
+    otros: '<path d="M21 8 12 3 3 8l9 5 9-5z" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linejoin="round"/><path d="M3 8v8l9 5 9-5V8M12 13v8" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linejoin="round"/>'
+  };
+
+  var CATEGORIES = [
+    { id:'comida', label:'Comida', color:'#C1440E' },
+    { id:'transporte', label:'Transporte', color:'#3F6B4F' },
+    { id:'vivienda', label:'Vivienda', color:'#8B6F47' },
+    { id:'servicios', label:'Servicios', color:'#4A6FA5' },
+    { id:'ocio', label:'Ocio', color:'#9B5DE5' },
+    { id:'salud', label:'Salud', color:'#D64550' },
+    { id:'otros', label:'Otros', color:'#6B6558' }
+  ];
+  var MESES = ["ENERO","FEBRERO","MARZO","ABRIL","MAYO","JUNIO","JULIO","AGOSTO","SEPTIEMBRE","OCTUBRE","NOVIEMBRE","DICIEMBRE"];
+  var STORAGE_KEY = 'control-gastos-v1';
+
+  function catInfo(id){
+    for (var i=0;i<CATEGORIES.length;i++) if (CATEGORIES[i].id===id) return CATEGORIES[i];
+    return CATEGORIES[CATEGORIES.length-1];
+  }
+  function icon(id, size, color){
+    return '<svg viewBox="0 0 24 24" style="width:'+size+'px;height:'+size+'px;color:'+color+'">'+ICONS[id]+'</svg>';
+  }
+  function fmt(n){
+    return n.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
+  }
+  function loadExpenses(){
+    try{
+      var raw = localStorage.getItem(STORAGE_KEY);
+      return raw ? JSON.parse(raw) : [];
+    }catch(e){ return []; }
+  }
+  function saveExpenses(list){
+    try{
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+      return true;
+    }catch(e){ return false; }
+  }
+
+  var expenses = loadExpenses();
+  var monthCursor = new Date(); monthCursor.setDate(1);
+  var selectedCategory = 'comida';
+
+  var descInput = document.getElementById('descInput');
+  var amountInput = document.getElementById('amountInput');
+  var categoriesEl = document.getElementById('categories');
+  var formError = document.getElementById('formError');
+  var monthLabel = document.getElementById('monthLabel');
+  var receiptEl = document.getElementById('receipt');
+  var breakdownEl = document.getElementById('breakdown');
+  var breakdownList = document.getElementById('breakdownList');
+
+  function renderCategories(){
+    categoriesEl.innerHTML = CATEGORIES.map(function(c){
+      var active = c.id === selectedCategory;
+      return '<button type="button" class="cat-chip'+(active?' active':'')+'" data-cat="'+c.id+'" '+
+        'style="'+(active?('background:'+c.color+';border-color:'+c.color+';'):'')+'">'+
+        icon(c.id, 12, active ? '#FDFCF9' : '#B7B2A2')+c.label+'</button>';
+    }).join('');
+    Array.prototype.forEach.call(categoriesEl.querySelectorAll('.cat-chip'), function(btn){
+      btn.addEventListener('click', function(){
+        selectedCategory = btn.getAttribute('data-cat');
+        renderCategories();
+      });
+    });
+  }
+
+  function showError(msg){
+    formError.textContent = msg;
+    formError.style.display = msg ? 'block' : 'none';
+  }
+
+  function clearForm(){
+    descInput.value = '';
+    amountInput.value = '';
+    selectedCategory = 'comida';
+    renderCategories();
+    showError('');
+  }
+
+  function addExpense(){
+    var desc = descInput.value.trim();
+    var value = parseFloat(String(amountInput.value).replace(',', '.'));
+    if (!desc){ showError('Escribe una descripcion antes de ingresar.'); return; }
+    if (!value || value <= 0){ showError('Ingresa un monto valido, mayor a 0.'); return; }
+    showError('');
+    var entry = {
+      id: Date.now().toString(36) + Math.random().toString(36).slice(2,6),
+      desc: desc, amount: value, category: selectedCategory, date: new Date().toISOString()
+    };
+    expenses = [entry].concat(expenses);
+    var ok = saveExpenses(expenses);
+    if (!ok) showError('No se pudo guardar en este navegador (revisa el espacio disponible).');
+    descInput.value = '';
+    amountInput.value = '';
+    renderAll();
+  }
+
+  function removeExpense(id){
+    expenses = expenses.filter(function(x){ return x.id !== id; });
+    saveExpenses(expenses);
+    renderAll();
+  }
+
+  function monthExpenses(){
+    return expenses.filter(function(x){
+      var d = new Date(x.date);
+      return d.getFullYear() === monthCursor.getFullYear() && d.getMonth() === monthCursor.getMonth();
+    }).sort(function(a,b){ return new Date(b.date) - new Date(a.date); });
+  }
+
+  function renderReceipt(){
+    var list = monthExpenses();
+    if (list.length === 0){
+      receiptEl.innerHTML = '<p class="empty">Sin gastos registrados este mes.</p><div class="torn"></div>';
+      return;
+    }
+    var total = list.reduce(function(s,x){ return s + x.amount; }, 0);
+    var rows = list.map(function(x){
+      var c = catInfo(x.category);
+      var d = new Date(x.date);
+      var day = String(d.getDate()).padStart(2,'0');
+      var month = String(d.getMonth()+1).padStart(2,'0');
+      return '<div class="expense-row">'+
+        icon(x.category, 14, c.color)+
+        '<div class="expense-info"><div class="expense-desc">'+escapeHtml(x.desc)+'</div>'+
+        '<div class="expense-meta">'+day+'/'+month+' &middot; '+c.label+'</div></div>'+
+        '<div class="expense-amount">$'+fmt(x.amount)+'</div>'+
+        '<button class="expense-del" data-id="'+x.id+'" aria-label="Eliminar gasto">'+
+        '<svg viewBox="0 0 24 24" style="width:13px;height:13px;color:#C9C3B5"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg>'+
+        '</button></div>';
+    }).join('');
+    receiptEl.innerHTML = rows +
+      '<div class="barcode"></div>' +
+      '<div class="total-row"><span class="total-label">TOTAL</span><span class="total-amount">$'+fmt(total)+'</span></div>' +
+      '<div class="torn"></div>';
+    Array.prototype.forEach.call(receiptEl.querySelectorAll('.expense-del'), function(btn){
+      btn.addEventListener('click', function(){ removeExpense(btn.getAttribute('data-id')); });
+    });
+  }
+
+  function renderBreakdown(){
+    var list = monthExpenses();
+    var map = {};
+    list.forEach(function(x){ map[x.category] = (map[x.category]||0) + x.amount; });
+    var cats = CATEGORIES.map(function(c){ return { c:c, total: map[c.id]||0 }; })
+      .filter(function(x){ return x.total > 0; })
+      .sort(function(a,b){ return b.total - a.total; });
+    if (cats.length === 0){ breakdownEl.style.display = 'none'; return; }
+    breakdownEl.style.display = 'block';
+    var max = cats[0].total;
+    breakdownList.innerHTML = cats.map(function(x){
+      var pct = Math.max(4, (x.total/max)*100);
+      return '<div class="cat-bar-row">'+
+        '<div class="cat-bar-label"><span class="name">'+icon(x.c.id,12,x.c.color)+x.c.label+'</span><span>$'+fmt(x.total)+'</span></div>'+
+        '<div class="cat-bar-track"><div class="cat-bar-fill" style="width:'+pct+'%;background:'+x.c.color+'"></div></div>'+
+        '</div>';
+    }).join('');
+  }
+
+  function renderMonthLabel(){
+    var label = MESES[monthCursor.getMonth()] + ' ' + monthCursor.getFullYear();
+    monthLabel.textContent = label;
+    var printTitle = document.getElementById('printTitle');
+    if (printTitle) printTitle.textContent = 'CONTROL DE GASTOS \u2014 ' + label;
+  }
+
+  function renderAll(){
+    renderMonthLabel();
+    renderReceipt();
+    renderBreakdown();
+  }
+
+  function escapeHtml(s){
+    var d = document.createElement('div');
+    d.textContent = s;
+    return d.innerHTML;
+  }
+
+  document.getElementById('prevMonth').addEventListener('click', function(){
+    monthCursor = new Date(monthCursor.getFullYear(), monthCursor.getMonth()-1, 1);
+    renderAll();
+  });
+  document.getElementById('nextMonth').addEventListener('click', function(){
+    monthCursor = new Date(monthCursor.getFullYear(), monthCursor.getMonth()+1, 1);
+    renderAll();
+  });
+  document.getElementById('clearBtn').addEventListener('click', clearForm);
+  document.getElementById('submitBtn').addEventListener('click', addExpense);
+  document.getElementById('printBtn').addEventListener('click', function(){
+    window.print();
+  });
+
+  renderCategories();
+  renderAll();
+})();
+</script>
+</body>
+</html>
