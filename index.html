@@ -119,6 +119,13 @@
   .total-row{display:flex;justify-content:space-between;align-items:baseline;}
   .total-label{font-family:'Space Grotesk', sans-serif;font-weight:700;font-size:14px;letter-spacing:.06em;}
   .total-amount{font-family:'Space Grotesk', sans-serif;font-weight:700;font-size:20px;}
+  .budget-bar{margin-top:14px;}
+  .budget-label{display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-bottom:4px;}
+  .budget-track{height:6px;background:#DFDACB;border-radius:3px;overflow:hidden;}
+  .budget-fill{height:100%;border-radius:3px;transition:width .2s ease;}
+  .budget-msg{font-size:11px;margin:6px 0 0;}
+  .budget-msg.budget-near{color:#C1440E;}
+  .budget-msg.budget-over{color:#D64550;font-weight:600;}
   .torn{
     position:absolute;left:0;right:0;bottom:-1px;height:14px;
     background-image:linear-gradient(135deg, transparent 50%, var(--paper) 50%),linear-gradient(-135deg, transparent 50%, var(--paper) 50%);
@@ -225,6 +232,7 @@
   ];
   var MESES = ["ENERO","FEBRERO","MARZO","ABRIL","MAYO","JUNIO","JULIO","AGOSTO","SEPTIEMBRE","OCTUBRE","NOVIEMBRE","DICIEMBRE"];
   var STORAGE_KEY = 'control-gastos-v1';
+  var BUDGET_LIMIT = 275;
 
   function catInfo(id){
     for (var i=0;i<CATEGORIES.length;i++) if (CATEGORIES[i].id===id) return CATEGORIES[i];
@@ -342,9 +350,25 @@
         '<svg viewBox="0 0 24 24" style="width:13px;height:13px;color:#C9C3B5"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg>'+
         '</button></div>';
     }).join('');
+    var pct = Math.min(100, (total / BUDGET_LIMIT) * 100);
+    var over = total > BUDGET_LIMIT;
+    var near = !over && total >= BUDGET_LIMIT * 0.8;
+    var barColor = over ? '#D64550' : (near ? '#C1440E' : '#4A6FA5');
+    var budgetMsg = '';
+    if (over){
+      budgetMsg = '<p class="budget-msg budget-over">Superaste tu limite mensual de $'+fmt(BUDGET_LIMIT)+' por $'+fmt(total - BUDGET_LIMIT)+'.</p>';
+    } else if (near){
+      budgetMsg = '<p class="budget-msg budget-near">Vas en el '+Math.round(pct)+'% de tu limite mensual de $'+fmt(BUDGET_LIMIT)+'.</p>';
+    }
+    var budgetBlock = '<div class="budget-bar">'+
+      '<div class="budget-label"><span>Presupuesto del mes</span><span>$'+fmt(total)+' / $'+fmt(BUDGET_LIMIT)+'</span></div>'+
+      '<div class="budget-track"><div class="budget-fill" style="width:'+pct+'%;background:'+barColor+'"></div></div>'+
+      budgetMsg +
+      '</div>';
     receiptEl.innerHTML = rows +
       '<div class="barcode"></div>' +
       '<div class="total-row"><span class="total-label">TOTAL</span><span class="total-amount">$'+fmt(total)+'</span></div>' +
+      budgetBlock +
       '<div class="torn"></div>';
     Array.prototype.forEach.call(receiptEl.querySelectorAll('.expense-del'), function(btn){
       btn.addEventListener('click', function(){ removeExpense(btn.getAttribute('data-id')); });
