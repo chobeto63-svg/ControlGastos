@@ -61,6 +61,10 @@
     font-family:'Space Grotesk', sans-serif;font-weight:600;font-size:14px;
     letter-spacing:.08em;
   }
+  .total-designated{
+    text-align:center;color:var(--ink-soft);font-size:12px;font-weight:600;
+    margin:0 0 16px;
+  }
 
   .panel{
     background:var(--panel);border-radius:10px;padding:14px;
@@ -202,6 +206,7 @@
     <span class="month-label" id="monthLabel"></span>
     <button id="nextMonth" aria-label="Mes siguiente">&#8594;</button>
   </div>
+  <p class="total-designated" id="totalDesignated"></p>
 
   <div class="panel">
     <div class="field-row">
@@ -451,8 +456,19 @@
   function renderAll(){
     renderMonthLabel();
     renderReceipt();
+    renderTotalDesignated();
     var panel = document.getElementById('analysisPanel');
     if (panel.style.display !== 'none') renderAnalysis();
+  }
+
+  function renderTotalDesignated(){
+    var el = document.getElementById('totalDesignated');
+    var total = CATEGORIES.reduce(function(s,c){ return s + (catBudgets[c.id] || 0); }, 0);
+    if (total === 0){
+      el.textContent = 'aun no has asignado presupuesto a ninguna categoria';
+    } else {
+      el.textContent = 'total designado a categorias: $' + fmt(total);
+    }
   }
 
   function renderAnalysis(){
