@@ -114,6 +114,10 @@
     letter-spacing:.03em;white-space:nowrap;
   }
   .cat-dots{flex:1;border-bottom:2px dotted var(--line);margin:0 6px 5px;height:0;min-width:10px;}
+  .cat-budget-tag{
+    font-size:10px;font-weight:600;color:var(--ink-soft);border:1px solid var(--line);
+    border-radius:4px;padding:1px 5px;margin-left:6px;white-space:nowrap;
+  }
   .cat-group-amount{font-family:'Space Grotesk', sans-serif;font-weight:700;font-size:14px;white-space:nowrap;}
   .cat-group-amount.ok{color:var(--ink);}
   .cat-group-amount.near{color:#C1440E;}
@@ -420,6 +424,7 @@
         '<div class="cat-group-header">'+
         icon(c.id, 16, c.color)+
         '<span class="cat-group-name">'+c.label+'</span>'+
+        (budget ? '<span class="cat-budget-tag">$'+fmt(budget)+'</span>' : '')+
         '<span class="cat-dots"></span>'+
         '<span class="cat-group-amount '+amountClass+'">'+amountHtml+'</span>'+
         '<button class="budget-edit" onclick="editCategoryBudget(\''+c.id+'\')" aria-label="Editar presupuesto de '+c.label+'">&#9998;</button>'+
