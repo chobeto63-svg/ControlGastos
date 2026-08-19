@@ -283,18 +283,43 @@
   function saveExpenses(list){
     try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(list)); return true; }catch(e){ return false; }
   }
-  function loadCatBudgets(){
+  function monthKey(d){
+    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
+  }
+  function loadBudgetsStore(){
     try{
       var raw = localStorage.getItem(CAT_BUDGETS_KEY);
-      return raw ? JSON.parse(raw) : {};
+      if (!raw) return {};
+      var parsed = JSON.parse(raw);
+      var keys = Object.keys(parsed);
+      var isLegacyFlatFormat = keys.length > 0 && typeof parsed[keys[0]] === 'number';
+      if (isLegacyFlatFormat){
+        var migrated = {};
+        migrated[monthKey(new Date())] = parsed;
+        saveBudgetsStore(migrated);
+        return migrated;
+      }
+      return parsed;
     }catch(e){ return {}; }
   }
-  function saveCatBudgets(obj){
-    try{ localStorage.setItem(CAT_BUDGETS_KEY, JSON.stringify(obj)); return true; }catch(e){ return false; }
+  function saveBudgetsStore(store){
+    try{ localStorage.setItem(CAT_BUDGETS_KEY, JSON.stringify(store)); return true; }catch(e){ return false; }
+  }
+  function getBudgetsForMonth(key){
+    if (budgetsStore[key]) return budgetsStore[key];
+    var priorKeys = Object.keys(budgetsStore).filter(function(k){ return k < key; }).sort();
+    if (priorKeys.length > 0){
+      var latest = priorKeys[priorKeys.length-1];
+      budgetsStore[key] = Object.assign({}, budgetsStore[latest]);
+    } else {
+      budgetsStore[key] = {};
+    }
+    saveBudgetsStore(budgetsStore);
+    return budgetsStore[key];
   }
 
   var expenses = loadExpenses();
-  var catBudgets = loadCatBudgets();
+  var budgetsStore = loadBudgetsStore();
   var monthCursor = new Date(); monthCursor.setDate(1);
   var selectedCategory = 'comida';
 
@@ -306,13 +331,15 @@
   var receiptEl = document.getElementById('receipt');
 
   function editCategoryBudget(catId){
+    var key = monthKey(monthCursor);
+    var budgets = getBudgetsForMonth(key);
     var c = catInfo(catId);
-    var current = catBudgets[catId];
-    var input = window.prompt('Presupuesto mensual para '+c.label+' (deja vacio para quitar el limite):', current ? String(current) : '');
+    var current = budgets[catId];
+    var input = window.prompt('Presupuesto para '+c.label+' en '+MESES[monthCursor.getMonth()]+' (deja vacio para quitar el limite):', current ? String(current) : '');
     if (input === null) return;
     if (input.trim() === ''){
-      delete catBudgets[catId];
-      saveCatBudgets(catBudgets);
+      delete budgets[catId];
+      saveBudgetsStore(budgetsStore);
       renderAll();
       return;
     }
@@ -321,8 +348,8 @@
       window.alert('Ingresa un monto valido, mayor a 0.');
       return;
     }
-    catBudgets[catId] = value;
-    saveCatBudgets(catBudgets);
+    budgets[catId] = value;
+    saveBudgetsStore(budgetsStore);
     renderAll();
   }
   window.editCategoryBudget = editCategoryBudget;
@@ -388,10 +415,11 @@
 
   function renderReceipt(){
     var list = monthExpenses();
+    var budgets = getBudgetsForMonth(monthKey(monthCursor));
     var spentByCat = {};
     list.forEach(function(x){ spentByCat[x.category] = (spentByCat[x.category]||0) + x.amount; });
     var visibleCats = CATEGORIES.filter(function(c){
-      return (spentByCat[c.id] && spentByCat[c.id] > 0) || (catBudgets[c.id] && catBudgets[c.id] > 0);
+      return (spentByCat[c.id] && spentByCat[c.id] > 0) || (budgets[c.id] && budgets[c.id] > 0);
     });
     if (visibleCats.length === 0){
       receiptEl.innerHTML = '<p class="empty">Sin gastos registrados este mes.</p><div class="torn"></div>';
@@ -400,7 +428,7 @@
     var total = list.reduce(function(s,x){ return s + x.amount; }, 0);
     var groupsHtml = visibleCats.map(function(c){
       var spent = spentByCat[c.id] || 0;
-      var budget = catBudgets[c.id];
+      var budget = budgets[c.id];
       var itemsForCat = list.filter(function(x){ return x.category === c.id; });
       var amountHtml, amountClass;
       if (budget){
@@ -463,7 +491,8 @@
 
   function renderTotalDesignated(){
     var el = document.getElementById('totalDesignated');
-    var total = CATEGORIES.reduce(function(s,c){ return s + (catBudgets[c.id] || 0); }, 0);
+    var budgets = getBudgetsForMonth(monthKey(monthCursor));
+    var total = CATEGORIES.reduce(function(s,c){ return s + (budgets[c.id] || 0); }, 0);
     if (total === 0){
       el.textContent = 'aun no has asignado presupuesto a ninguna categoria';
     } else {
@@ -482,13 +511,14 @@
     var dayOfMonth = now.getDate();
     var daysInMonth = new Date(monthCursor.getFullYear(), monthCursor.getMonth()+1, 0).getDate();
     var list = monthExpenses();
+    var budgets = getBudgetsForMonth(monthKey(monthCursor));
     var spentByCat = {};
     var countByCat = {};
     list.forEach(function(x){
       spentByCat[x.category] = (spentByCat[x.category]||0) + x.amount;
       countByCat[x.category] = (countByCat[x.category]||0) + 1;
     });
-    var budgeted = CATEGORIES.filter(function(c){ return catBudgets[c.id] > 0; });
+    var budgeted = CATEGORIES.filter(function(c){ return budgets[c.id] > 0; });
     if (budgeted.length === 0){
       panel.innerHTML = '<p>Asigna un presupuesto a al menos una categoria (toca el lapiz junto a su nombre) para ver este analisis.</p>';
       return;
@@ -496,7 +526,7 @@
     var rows = budgeted.map(function(c){
       var spent = spentByCat[c.id] || 0;
       var count = countByCat[c.id] || 0;
-      var budget = catBudgets[c.id];
+      var budget = budgets[c.id];
       var isLumpSum = count <= 1;
       var dailyRate = (!isLumpSum && dayOfMonth > 0) ? spent / dayOfMonth : 0;
       var projected = isLumpSum ? spent : dailyRate * daysInMonth;
