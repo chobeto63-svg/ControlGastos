@@ -102,15 +102,35 @@
     box-shadow:0 10px 28px rgba(0,0,0,.16);padding:22px 20px 26px;position:relative;
   }
   .receipt .empty{text-align:center;color:var(--muted);font-size:13px;padding:20px 0;}
+
+  .cat-group{margin-bottom:6px;}
+  .cat-group-header{
+    display:flex;align-items:center;gap:7px;padding:10px 0 7px;
+    border-bottom:2px solid var(--ink);
+  }
+  .cat-group-header svg{width:16px;height:16px;flex-shrink:0;}
+  .cat-group-name{
+    font-family:'Space Grotesk', sans-serif;font-weight:700;font-size:13px;
+    letter-spacing:.03em;white-space:nowrap;
+  }
+  .cat-dots{flex:1;border-bottom:2px dotted var(--line);margin:0 6px 5px;height:0;min-width:10px;}
+  .cat-group-amount{font-family:'Space Grotesk', sans-serif;font-weight:700;font-size:14px;white-space:nowrap;}
+  .cat-group-amount.ok{color:var(--ink);}
+  .cat-group-amount.near{color:#C1440E;}
+  .cat-group-amount.over{color:#D64550;}
+  .cat-group-amount.nobudget{color:var(--muted);font-weight:600;}
+
   .expense-row{
     display:flex;align-items:center;gap:8px;border-bottom:1px dashed var(--line);padding:9px 0;
   }
+  .expense-row-sub{padding-left:23px;}
   .expense-row svg{width:14px;height:14px;flex-shrink:0;}
   .expense-info{flex:1;min-width:0;}
   .expense-desc{font-size:13px;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
   .expense-meta{font-size:10px;color:#A9A392;}
   .expense-amount{font-size:13px;font-weight:600;color:var(--ink);}
   .expense-del{background:none;border:none;color:#C9C3B5;cursor:pointer;padding:2px;display:flex;}
+
   .barcode{
     height:22px;margin:14px 0 10px;
     background-image:repeating-linear-gradient(90deg,#24231F 0px,#24231F 2px,transparent 2px,transparent 3px,#24231F 3px,#24231F 4px,transparent 4px,transparent 6px,#24231F 6px,#24231F 8px,transparent 8px,transparent 9px);
@@ -119,51 +139,45 @@
   .total-row{display:flex;justify-content:space-between;align-items:baseline;}
   .total-label{font-family:'Space Grotesk', sans-serif;font-weight:700;font-size:14px;letter-spacing:.06em;}
   .total-amount{font-family:'Space Grotesk', sans-serif;font-weight:700;font-size:20px;}
-  .budget-bar{margin-top:14px;}
-  .budget-label{display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-bottom:4px;}
-  .budget-track{height:6px;background:#DFDACB;border-radius:3px;overflow:hidden;}
-  .budget-fill{height:100%;border-radius:3px;transition:width .2s ease;}
-  .budget-msg{font-size:11px;margin:6px 0 0;}
-  .budget-msg.budget-near{color:#C1440E;}
-  .budget-msg.budget-over{color:#D64550;font-weight:600;}
-  .budget-edit{background:none;border:none;color:var(--ink-soft);cursor:pointer;font-size:18px;line-height:1;padding:0 0 0 8px;vertical-align:middle;}
-  .limit-line{text-align:center;color:var(--ink-soft);font-size:14px;font-weight:700;margin:0 0 14px;}
+  .budget-edit{background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px;line-height:1;padding:0 0 0 6px;flex-shrink:0;}
   .torn{
     position:absolute;left:0;right:0;bottom:-1px;height:14px;
     background-image:linear-gradient(135deg, transparent 50%, var(--paper) 50%),linear-gradient(-135deg, transparent 50%, var(--paper) 50%);
     background-size:14px 14px;background-position:bottom;background-repeat:repeat-x;
   }
 
-  .breakdown{margin-top:34px;}
-  .breakdown h2{
-    font-family:'Space Grotesk', sans-serif;font-weight:600;font-size:13px;
-    letter-spacing:.08em;margin:0 0 10px;
-  }
-  .cat-bar-row{margin-bottom:9px;}
-  .cat-bar-label{display:flex;justify-content:space-between;font-size:11px;color:var(--ink-soft);margin-bottom:3px;}
-  .cat-bar-label .name{display:flex;align-items:center;gap:5px;}
-  .cat-bar-label svg{width:12px;height:12px;}
-  .cat-bar-track{height:6px;background:#DFDACB;border-radius:3px;overflow:hidden;}
-  .cat-bar-fill{height:100%;border-radius:3px;}
-
   .btn-print{
     display:block;width:100%;background:transparent;color:var(--ink-soft);
-    border:1px solid #C9C3B5;border-radius:6px;padding:9px 0;margin-bottom:16px;
+    border:1px solid #C9C3B5;border-radius:6px;padding:9px 0;margin-bottom:10px;
     font-family:'IBM Plex Mono', monospace;font-size:12px;cursor:pointer;
   }
+  .analysis-panel{
+    background:var(--card);border-radius:8px;padding:16px;margin-bottom:16px;
+    box-shadow:0 4px 14px rgba(0,0,0,.12);font-size:12px;line-height:1.5;
+  }
+  .analysis-panel h3{
+    margin:0 0 10px;font-family:'Space Grotesk', sans-serif;font-size:13px;letter-spacing:.04em;
+  }
+  .analysis-row{margin-bottom:10px;padding-bottom:10px;border-bottom:1px dashed var(--line);}
+  .analysis-row:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0;}
+  .analysis-row p{margin:0 0 4px;}
+  .analysis-ok{color:#3F6B4F;}
+  .analysis-warn{color:#D64550;}
+
   .print-only-title{display:none;}
 
   @media print{
     body{background:#fff;padding:0;display:block;}
-    header, .month-nav, .panel, .btn-print{display:none !important;}
+    header, .month-nav, .panel, .btn-print, .analysis-panel{display:none !important;}
     .wrap{max-width:100%;}
     .receipt{box-shadow:none;padding:0;}
     .torn{display:none;}
+    .budget-edit{display:none;}
     .print-only-title{
       display:block;font-family:'Space Grotesk', sans-serif;font-size:18px;
       letter-spacing:.06em;margin:0 0 14px;
     }
-    .breakdown{margin-top:24px;page-break-inside:avoid;}
+    .cat-group{page-break-inside:avoid;}
   }
 </style>
 </head>
@@ -184,7 +198,6 @@
     <span class="month-label" id="monthLabel"></span>
     <button id="nextMonth" aria-label="Mes siguiente">&#8594;</button>
   </div>
-  <p class="limit-line">limite mensual: <span id="limitDisplay"></span> <button class="budget-edit" onclick="editBudgetLimit()" aria-label="Editar limite">&#9998;</button></p>
 
   <div class="panel">
     <div class="field-row">
@@ -200,15 +213,12 @@
   </div>
 
   <button class="btn-print" id="printBtn" type="button">&#128424; Imprimir detalle del mes</button>
+  <button class="btn-print" id="analysisBtn" type="button">&#128202; Ver analisis del mes</button>
+  <div class="analysis-panel" id="analysisPanel" style="display:none;"></div>
 
   <div id="printArea">
     <h2 class="print-only-title" id="printTitle"></h2>
     <div class="receipt" id="receipt"></div>
-
-    <div class="breakdown" id="breakdown" style="display:none;">
-      <h2>POR CATEGORIA</h2>
-      <div id="breakdownList"></div>
-    </div>
   </div>
 </div>
 
@@ -221,6 +231,10 @@
     servicios: '<path d="M13 2 4 14h6l-1 8 9-12h-6l1-8z" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linejoin="round"/>',
     ocio: '<rect x="3" y="6" width="18" height="14" rx="1.5" stroke="currentColor" stroke-width="1.8" fill="none"/><path d="M3 10h18M8 6v4M15 6v4" stroke="currentColor" stroke-width="1.6"/>',
     salud: '<path d="M12 21s-7-4.4-9.5-9C.7 8.4 2.6 4 6.7 4 9 4 11 5.3 12 7c1-1.7 3-3 5.3-3 4.1 0 6 4.4 4.2 8-2.5 4.6-9.5 9-9.5 9z" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linejoin="round"/><path d="M6 12h3l1.5-3L13 15l1.5-3H18" stroke="currentColor" stroke-width="1.4" fill="none"/>',
+    mascota: '<circle cx="7" cy="8" r="1.7" stroke="currentColor" stroke-width="1.6" fill="none"/><circle cx="12" cy="5.5" r="1.7" stroke="currentColor" stroke-width="1.6" fill="none"/><circle cx="17" cy="8" r="1.7" stroke="currentColor" stroke-width="1.6" fill="none"/><path d="M12 11c-3.3 0-6 2.4-6 5.3 0 1.7 1.3 2.7 3 2.7 1.2 0 1.8-.8 3-.8s1.8.8 3 .8c1.7 0 3-1 3-2.7 0-2.9-2.7-5.3-6-5.3z" stroke="currentColor" stroke-width="1.6" fill="none"/>',
+    educacion: '<path d="M4 5v13c2-1 5-1 7 1 2-2 5-2 7-1V5c-2-1-5-1-7 1-2-2-5-2-7-1z" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linejoin="round"/><path d="M11 6v13" stroke="currentColor" stroke-width="1.4"/>',
+    creditos: '<rect x="2" y="6" width="20" height="14" rx="2" stroke="currentColor" stroke-width="1.8" fill="none"/><path d="M2 10h20" stroke="currentColor" stroke-width="1.8"/><path d="M5 15h5" stroke="currentColor" stroke-width="1.6"/>',
+    imprevistos: '<path d="M12 3 2 20h20L12 3z" stroke="currentColor" stroke-width="1.7" fill="none" stroke-linejoin="round"/><path d="M12 10v4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="12" cy="17" r="0.9" fill="currentColor"/>',
     otros: '<path d="M21 8 12 3 3 8l9 5 9-5z" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linejoin="round"/><path d="M3 8v8l9 5 9-5V8M12 13v8" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linejoin="round"/>'
   };
 
@@ -231,37 +245,15 @@
     { id:'servicios', label:'Servicios', color:'#4A6FA5' },
     { id:'ocio', label:'Ocio', color:'#9B5DE5' },
     { id:'salud', label:'Salud', color:'#D64550' },
+    { id:'mascota', label:'Mascota', color:'#8FA84A' },
+    { id:'educacion', label:'Educacion', color:'#2C8C99' },
+    { id:'creditos', label:'Creditos', color:'#6B4A8C' },
+    { id:'imprevistos', label:'Imprevistos', color:'#D98A1C' },
     { id:'otros', label:'Otros', color:'#6B6558' }
   ];
   var MESES = ["ENERO","FEBRERO","MARZO","ABRIL","MAYO","JUNIO","JULIO","AGOSTO","SEPTIEMBRE","OCTUBRE","NOVIEMBRE","DICIEMBRE"];
   var STORAGE_KEY = 'control-gastos-v1';
-  var LIMIT_KEY = 'control-gastos-limit';
-  var BUDGET_LIMIT = loadBudgetLimit();
-
-  function loadBudgetLimit(){
-    try{
-      var raw = localStorage.getItem('control-gastos-limit');
-      var n = parseFloat(raw);
-      return (n && n > 0) ? n : 275;
-    }catch(e){ return 275; }
-  }
-  function saveBudgetLimit(n){
-    try{ localStorage.setItem(LIMIT_KEY, String(n)); return true; }catch(e){ return false; }
-  }
-  function editBudgetLimit(){
-    var current = BUDGET_LIMIT;
-    var input = window.prompt('Ingresa tu limite de presupuesto mensual (en dolares):', String(current));
-    if (input === null) return;
-    var value = parseFloat(String(input).replace(',', '.'));
-    if (!value || value <= 0){
-      window.alert('Ingresa un monto valido, mayor a 0.');
-      return;
-    }
-    BUDGET_LIMIT = value;
-    saveBudgetLimit(value);
-    renderAll();
-  }
-  window.editBudgetLimit = editBudgetLimit;
+  var CAT_BUDGETS_KEY = 'control-gastos-cat-budgets';
 
   function catInfo(id){
     for (var i=0;i<CATEGORIES.length;i++) if (CATEGORIES[i].id===id) return CATEGORIES[i];
@@ -280,13 +272,20 @@
     }catch(e){ return []; }
   }
   function saveExpenses(list){
+    try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(list)); return true; }catch(e){ return false; }
+  }
+  function loadCatBudgets(){
     try{
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
-      return true;
-    }catch(e){ return false; }
+      var raw = localStorage.getItem(CAT_BUDGETS_KEY);
+      return raw ? JSON.parse(raw) : {};
+    }catch(e){ return {}; }
+  }
+  function saveCatBudgets(obj){
+    try{ localStorage.setItem(CAT_BUDGETS_KEY, JSON.stringify(obj)); return true; }catch(e){ return false; }
   }
 
   var expenses = loadExpenses();
+  var catBudgets = loadCatBudgets();
   var monthCursor = new Date(); monthCursor.setDate(1);
   var selectedCategory = 'comida';
 
@@ -296,8 +295,28 @@
   var formError = document.getElementById('formError');
   var monthLabel = document.getElementById('monthLabel');
   var receiptEl = document.getElementById('receipt');
-  var breakdownEl = document.getElementById('breakdown');
-  var breakdownList = document.getElementById('breakdownList');
+
+  function editCategoryBudget(catId){
+    var c = catInfo(catId);
+    var current = catBudgets[catId];
+    var input = window.prompt('Presupuesto mensual para '+c.label+' (deja vacio para quitar el limite):', current ? String(current) : '');
+    if (input === null) return;
+    if (input.trim() === ''){
+      delete catBudgets[catId];
+      saveCatBudgets(catBudgets);
+      renderAll();
+      return;
+    }
+    var value = parseFloat(String(input).replace(',', '.'));
+    if (!value || value <= 0){
+      window.alert('Ingresa un monto valido, mayor a 0.');
+      return;
+    }
+    catBudgets[catId] = value;
+    saveCatBudgets(catBudgets);
+    renderAll();
+  }
+  window.editCategoryBudget = editCategoryBudget;
 
   function renderCategories(){
     categoriesEl.innerHTML = CATEGORIES.map(function(c){
@@ -360,67 +379,61 @@
 
   function renderReceipt(){
     var list = monthExpenses();
-    if (list.length === 0){
+    var spentByCat = {};
+    list.forEach(function(x){ spentByCat[x.category] = (spentByCat[x.category]||0) + x.amount; });
+    var visibleCats = CATEGORIES.filter(function(c){
+      return (spentByCat[c.id] && spentByCat[c.id] > 0) || (catBudgets[c.id] && catBudgets[c.id] > 0);
+    });
+    if (visibleCats.length === 0){
       receiptEl.innerHTML = '<p class="empty">Sin gastos registrados este mes.</p><div class="torn"></div>';
       return;
     }
     var total = list.reduce(function(s,x){ return s + x.amount; }, 0);
-    var rows = list.map(function(x){
-      var c = catInfo(x.category);
-      var d = new Date(x.date);
-      var day = String(d.getDate()).padStart(2,'0');
-      var month = String(d.getMonth()+1).padStart(2,'0');
-      return '<div class="expense-row">'+
-        icon(x.category, 14, c.color)+
-        '<div class="expense-info"><div class="expense-desc">'+escapeHtml(x.desc)+'</div>'+
-        '<div class="expense-meta">'+day+'/'+month+' &middot; '+c.label+'</div></div>'+
-        '<div class="expense-amount">$'+fmt(x.amount)+'</div>'+
-        '<button class="expense-del" data-id="'+x.id+'" aria-label="Eliminar gasto">'+
-        '<svg viewBox="0 0 24 24" style="width:13px;height:13px;color:#C9C3B5"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg>'+
-        '</button></div>';
+    var groupsHtml = visibleCats.map(function(c){
+      var spent = spentByCat[c.id] || 0;
+      var budget = catBudgets[c.id];
+      var itemsForCat = list.filter(function(x){ return x.category === c.id; });
+      var amountHtml, amountClass;
+      if (budget){
+        var remaining = budget - spent;
+        var over = remaining < 0;
+        var near = !over && remaining <= budget * 0.2;
+        amountClass = over ? 'over' : (near ? 'near' : 'ok');
+        amountHtml = '$'+fmt(remaining);
+      } else {
+        amountClass = 'nobudget';
+        amountHtml = '$'+fmt(spent);
+      }
+      var rows = itemsForCat.map(function(x){
+        var d = new Date(x.date);
+        var day = String(d.getDate()).padStart(2,'0');
+        var month = String(d.getMonth()+1).padStart(2,'0');
+        return '<div class="expense-row expense-row-sub">'+
+          '<div class="expense-info"><div class="expense-desc">'+escapeHtml(x.desc)+'</div>'+
+          '<div class="expense-meta">'+day+'/'+month+'</div></div>'+
+          '<div class="expense-amount">$'+fmt(x.amount)+'</div>'+
+          '<button class="expense-del" data-id="'+x.id+'" aria-label="Eliminar gasto">'+
+          '<svg viewBox="0 0 24 24" style="width:13px;height:13px;color:#C9C3B5"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg>'+
+          '</button></div>';
+      }).join('');
+      return '<div class="cat-group">'+
+        '<div class="cat-group-header">'+
+        icon(c.id, 16, c.color)+
+        '<span class="cat-group-name">'+c.label+'</span>'+
+        '<span class="cat-dots"></span>'+
+        '<span class="cat-group-amount '+amountClass+'">'+amountHtml+'</span>'+
+        '<button class="budget-edit" onclick="editCategoryBudget(\''+c.id+'\')" aria-label="Editar presupuesto de '+c.label+'">&#9998;</button>'+
+        '</div>'+
+        rows +
+        '</div>';
     }).join('');
-    var pct = Math.min(100, (total / BUDGET_LIMIT) * 100);
-    var over = total > BUDGET_LIMIT;
-    var near = !over && total >= BUDGET_LIMIT * 0.8;
-    var barColor = over ? '#D64550' : (near ? '#C1440E' : '#4A6FA5');
-    var budgetMsg = '';
-    if (over){
-      budgetMsg = '<p class="budget-msg budget-over">Superaste tu limite mensual de $'+fmt(BUDGET_LIMIT)+' por $'+fmt(total - BUDGET_LIMIT)+'.</p>';
-    } else if (near){
-      budgetMsg = '<p class="budget-msg budget-near">Vas en el '+Math.round(pct)+'% de tu limite mensual de $'+fmt(BUDGET_LIMIT)+'.</p>';
-    }
-    var budgetBlock = '<div class="budget-bar">'+
-      '<div class="budget-label"><span>Presupuesto del mes</span><span>$'+fmt(total)+' / $'+fmt(BUDGET_LIMIT)+' <button class="budget-edit" onclick="editBudgetLimit()" aria-label="Editar limite">&#9998;</button></span></div>'+
-      '<div class="budget-track"><div class="budget-fill" style="width:'+pct+'%;background:'+barColor+'"></div></div>'+
-      budgetMsg +
-      '</div>';
-    receiptEl.innerHTML = rows +
+    receiptEl.innerHTML = groupsHtml +
       '<div class="barcode"></div>' +
       '<div class="total-row"><span class="total-label">TOTAL</span><span class="total-amount">$'+fmt(total)+'</span></div>' +
-      budgetBlock +
       '<div class="torn"></div>';
     Array.prototype.forEach.call(receiptEl.querySelectorAll('.expense-del'), function(btn){
       btn.addEventListener('click', function(){ removeExpense(btn.getAttribute('data-id')); });
     });
-  }
-
-  function renderBreakdown(){
-    var list = monthExpenses();
-    var map = {};
-    list.forEach(function(x){ map[x.category] = (map[x.category]||0) + x.amount; });
-    var cats = CATEGORIES.map(function(c){ return { c:c, total: map[c.id]||0 }; })
-      .filter(function(x){ return x.total > 0; })
-      .sort(function(a,b){ return b.total - a.total; });
-    if (cats.length === 0){ breakdownEl.style.display = 'none'; return; }
-    breakdownEl.style.display = 'block';
-    var max = cats[0].total;
-    breakdownList.innerHTML = cats.map(function(x){
-      var pct = Math.max(4, (x.total/max)*100);
-      return '<div class="cat-bar-row">'+
-        '<div class="cat-bar-label"><span class="name">'+icon(x.c.id,12,x.c.color)+x.c.label+'</span><span>$'+fmt(x.total)+'</span></div>'+
-        '<div class="cat-bar-track"><div class="cat-bar-fill" style="width:'+pct+'%;background:'+x.c.color+'"></div></div>'+
-        '</div>';
-    }).join('');
   }
 
   function renderMonthLabel(){
@@ -433,9 +446,58 @@
   function renderAll(){
     renderMonthLabel();
     renderReceipt();
-    renderBreakdown();
-    var limitDisplay = document.getElementById('limitDisplay');
-    if (limitDisplay) limitDisplay.textContent = '$' + fmt(BUDGET_LIMIT);
+    var panel = document.getElementById('analysisPanel');
+    if (panel.style.display !== 'none') renderAnalysis();
+  }
+
+  function renderAnalysis(){
+    var panel = document.getElementById('analysisPanel');
+    var now = new Date();
+    var isCurrent = now.getFullYear() === monthCursor.getFullYear() && now.getMonth() === monthCursor.getMonth();
+    if (!isCurrent){
+      panel.innerHTML = '<p>El analisis de ritmo de gasto solo aplica al mes actual.</p>';
+      return;
+    }
+    var dayOfMonth = now.getDate();
+    var daysInMonth = new Date(monthCursor.getFullYear(), monthCursor.getMonth()+1, 0).getDate();
+    var list = monthExpenses();
+    var spentByCat = {};
+    list.forEach(function(x){ spentByCat[x.category] = (spentByCat[x.category]||0) + x.amount; });
+    var budgeted = CATEGORIES.filter(function(c){ return catBudgets[c.id] > 0; });
+    if (budgeted.length === 0){
+      panel.innerHTML = '<p>Asigna un presupuesto a al menos una categoria (toca el lapiz junto a su nombre) para ver este analisis.</p>';
+      return;
+    }
+    var rows = budgeted.map(function(c){
+      var spent = spentByCat[c.id] || 0;
+      var dailyRate = dayOfMonth > 0 ? spent / dayOfMonth : 0;
+      var projected = dailyRate * daysInMonth;
+      var budget = catBudgets[c.id];
+      var daysCovered = dailyRate > 0 ? Math.min(daysInMonth, Math.floor(budget / dailyRate)) : daysInMonth;
+      return { c:c, spent:spent, budget:budget, projected:projected, over: projected > budget, daysCovered: daysCovered, surplus: budget - projected };
+    });
+    var overRows = rows.filter(function(r){ return r.over; });
+    var surplusRows = rows.filter(function(r){ return !r.over && r.surplus > 0; }).sort(function(a,b){ return b.surplus - a.surplus; });
+
+    var html = '<h3>Analisis al dia '+dayOfMonth+' de '+daysInMonth+'</h3>';
+    if (overRows.length === 0){
+      html += '<p class="analysis-ok">Todas tus categorias con presupuesto van bien encaminadas para cubrir el mes.</p>';
+    } else {
+      overRows.forEach(function(r){
+        html += '<div class="analysis-row"><p class="analysis-warn"><strong>'+r.c.label+'</strong>: al ritmo actual, tu saldo alcanza hasta el dia '+r.daysCovered+' (presupuesto $'+fmt(r.budget)+').</p>';
+        var donor = null;
+        for (var i=0;i<surplusRows.length;i++){ if (surplusRows[i].c.id !== r.c.id){ donor = surplusRows[i]; break; } }
+        if (donor){
+          var need = r.projected - r.budget;
+          var canCover = Math.min(need, donor.surplus);
+          html += '<p>Podrias tomar $'+fmt(canCover)+' de <strong>'+donor.c.label+'</strong> (le sobrarian $'+fmt(donor.surplus)+' segun tu ritmo actual).</p>';
+        } else {
+          html += '<p>No se detecta otra categoria con saldo de sobra para cubrir el faltante.</p>';
+        }
+        html += '</div>';
+      });
+    }
+    panel.innerHTML = html;
   }
 
   function escapeHtml(s){
@@ -456,6 +518,12 @@
   document.getElementById('submitBtn').addEventListener('click', addExpense);
   document.getElementById('printBtn').addEventListener('click', function(){
     window.print();
+  });
+  document.getElementById('analysisBtn').addEventListener('click', function(){
+    var panel = document.getElementById('analysisPanel');
+    var showing = panel.style.display !== 'none';
+    if (showing){ panel.style.display = 'none'; }
+    else { renderAnalysis(); panel.style.display = 'block'; }
   });
 
   renderCategories();
