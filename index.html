@@ -483,7 +483,11 @@
     var daysInMonth = new Date(monthCursor.getFullYear(), monthCursor.getMonth()+1, 0).getDate();
     var list = monthExpenses();
     var spentByCat = {};
-    list.forEach(function(x){ spentByCat[x.category] = (spentByCat[x.category]||0) + x.amount; });
+    var countByCat = {};
+    list.forEach(function(x){
+      spentByCat[x.category] = (spentByCat[x.category]||0) + x.amount;
+      countByCat[x.category] = (countByCat[x.category]||0) + 1;
+    });
     var budgeted = CATEGORIES.filter(function(c){ return catBudgets[c.id] > 0; });
     if (budgeted.length === 0){
       panel.innerHTML = '<p>Asigna un presupuesto a al menos una categoria (toca el lapiz junto a su nombre) para ver este analisis.</p>';
@@ -491,11 +495,13 @@
     }
     var rows = budgeted.map(function(c){
       var spent = spentByCat[c.id] || 0;
-      var dailyRate = dayOfMonth > 0 ? spent / dayOfMonth : 0;
-      var projected = dailyRate * daysInMonth;
+      var count = countByCat[c.id] || 0;
       var budget = catBudgets[c.id];
+      var isLumpSum = count <= 1;
+      var dailyRate = (!isLumpSum && dayOfMonth > 0) ? spent / dayOfMonth : 0;
+      var projected = isLumpSum ? spent : dailyRate * daysInMonth;
       var daysCovered = dailyRate > 0 ? Math.min(daysInMonth, Math.floor(budget / dailyRate)) : daysInMonth;
-      return { c:c, spent:spent, budget:budget, projected:projected, over: projected > budget, daysCovered: daysCovered, surplus: budget - projected };
+      return { c:c, spent:spent, budget:budget, projected:projected, over: projected > budget, isLumpSum: isLumpSum, daysCovered: daysCovered, surplus: budget - projected };
     });
     var overRows = rows.filter(function(r){ return r.over; });
     var surplusRows = rows.filter(function(r){ return !r.over && r.surplus > 0; }).sort(function(a,b){ return b.surplus - a.surplus; });
@@ -505,7 +511,10 @@
       html += '<p class="analysis-ok">Todas tus categorias con presupuesto van bien encaminadas para cubrir el mes.</p>';
     } else {
       overRows.forEach(function(r){
-        html += '<div class="analysis-row"><p class="analysis-warn"><strong>'+r.c.label+'</strong>: al ritmo actual, tu saldo alcanza hasta el dia '+r.daysCovered+' (presupuesto $'+fmt(r.budget)+').</p>';
+        var line = r.isLumpSum
+          ? '<strong>'+r.c.label+'</strong>: ya gastaste $'+fmt(r.spent)+' de tu presupuesto de $'+fmt(r.budget)+'.'
+          : '<strong>'+r.c.label+'</strong>: al ritmo actual, tu saldo alcanza hasta el dia '+r.daysCovered+' (presupuesto $'+fmt(r.budget)+').';
+        html += '<div class="analysis-row"><p class="analysis-warn">'+line+'</p>';
         var donor = null;
         for (var i=0;i<surplusRows.length;i++){ if (surplusRows[i].c.id !== r.c.id){ donor = surplusRows[i]; break; } }
         if (donor){
