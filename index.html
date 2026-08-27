@@ -205,7 +205,9 @@
     <button id="prevMonth" aria-label="Mes anterior">&#8592;</button>
     <span class="month-label" id="monthLabel"></span>
     <button id="nextMonth" aria-label="Mes siguiente">&#8594;</button>
+    <button id="paydayBtn" aria-label="Configurar dia de pago" style="margin-left:6px;background:none;border:none;cursor:pointer;font-size:15px;">&#9881;</button>
   </div>
+  <p class="payday-note" id="paydayNote" style="text-align:center;font-size:11px;color:#8A8478;margin:0 0 6px;"></p>
   <p class="total-designated" id="totalDesignated"></p>
 
   <div class="panel">
@@ -263,6 +265,52 @@
   var MESES = ["ENERO","FEBRERO","MARZO","ABRIL","MAYO","JUNIO","JULIO","AGOSTO","SEPTIEMBRE","OCTUBRE","NOVIEMBRE","DICIEMBRE"];
   var STORAGE_KEY = 'control-gastos-v1';
   var CAT_BUDGETS_KEY = 'control-gastos-cat-budgets';
+  var PAYDAY_KEY = 'control-gastos-payday';
+
+  function loadPayday(){
+    try{
+      var raw = localStorage.getItem(PAYDAY_KEY);
+      var n = raw ? parseInt(raw, 10) : 1;
+      if (!n || n < 1 || n > 31) n = 1;
+      return n;
+    }catch(e){ return 1; }
+  }
+  function savePayday(n){
+    try{ localStorage.setItem(PAYDAY_KEY, String(n)); return true; }catch(e){ return false; }
+  }
+  // Ultimo dia valido de un mes dado (para paydays como 29/30/31 en meses cortos)
+  function lastDayOf(year, month){
+    return new Date(year, month+1, 0).getDate();
+  }
+  // Dado un año/mes y el dia de pago configurado, devuelve la fecha real de inicio de periodo en ese mes
+  function paydayDateIn(year, month){
+    var d = Math.min(PAYDAY, lastDayOf(year, month));
+    return new Date(year, month, d);
+  }
+  // Dada una fecha cualquiera, devuelve el inicio del periodo (dia de pago) al que pertenece
+  function getPeriodStart(refDate){
+    var y = refDate.getFullYear(), m = refDate.getMonth();
+    var thisMonthPayday = paydayDateIn(y, m);
+    if (refDate.getDate() >= thisMonthPayday.getDate()){
+      return thisMonthPayday;
+    } else {
+      var pm = m - 1, py = y;
+      if (pm < 0){ pm = 11; py = y - 1; }
+      return paydayDateIn(py, pm);
+    }
+  }
+  // Inicio del periodo siguiente (fin exclusivo del periodo actual)
+  function getPeriodEnd(periodStart){
+    var nm = periodStart.getMonth() + 1, ny = periodStart.getFullYear();
+    if (nm > 11){ nm = 0; ny = ny + 1; }
+    return paydayDateIn(ny, nm);
+  }
+  function periodKey(periodStart){
+    return periodStart.getFullYear() + '-' + String(periodStart.getMonth()+1).padStart(2,'0') + '-' + String(periodStart.getDate()).padStart(2,'0');
+  }
+  function formatShortDate(d){
+    return String(d.getDate()).padStart(2,'0') + ' ' + MESES[d.getMonth()].slice(0,3);
+  }
 
   function catInfo(id){
     for (var i=0;i<CATEGORIES.length;i++) if (CATEGORIES[i].id===id) return CATEGORIES[i];
@@ -320,7 +368,8 @@
 
   var expenses = loadExpenses();
   var budgetsStore = loadBudgetsStore();
-  var monthCursor = new Date(); monthCursor.setDate(1);
+  var PAYDAY = loadPayday();
+  var monthCursor = getPeriodStart(new Date());
   var selectedCategory = 'comida';
 
   var descInput = document.getElementById('descInput');
@@ -331,11 +380,13 @@
   var receiptEl = document.getElementById('receipt');
 
   function editCategoryBudget(catId){
-    var key = monthKey(monthCursor);
+    var key = periodKey(monthCursor);
     var budgets = getBudgetsForMonth(key);
     var c = catInfo(catId);
     var current = budgets[catId];
-    var input = window.prompt('Presupuesto para '+c.label+' en '+MESES[monthCursor.getMonth()]+' (deja vacio para quitar el limite):', current ? String(current) : '');
+    var periodEnd = new Date(getPeriodEnd(monthCursor).getTime() - 86400000);
+    var rangeLabel = PAYDAY === 1 ? MESES[monthCursor.getMonth()] : (formatShortDate(monthCursor)+' - '+formatShortDate(periodEnd));
+    var input = window.prompt('Presupuesto para '+c.label+' en '+rangeLabel+' (deja vacio para quitar el limite):', current ? String(current) : '');
     if (input === null) return;
     if (input.trim() === ''){
       delete budgets[catId];
@@ -407,22 +458,24 @@
   }
 
   function monthExpenses(){
+    var start = monthCursor;
+    var end = getPeriodEnd(monthCursor);
     return expenses.filter(function(x){
       var d = new Date(x.date);
-      return d.getFullYear() === monthCursor.getFullYear() && d.getMonth() === monthCursor.getMonth();
+      return d >= start && d < end;
     }).sort(function(a,b){ return new Date(b.date) - new Date(a.date); });
   }
 
   function renderReceipt(){
     var list = monthExpenses();
-    var budgets = getBudgetsForMonth(monthKey(monthCursor));
+    var budgets = getBudgetsForMonth(periodKey(monthCursor));
     var spentByCat = {};
     list.forEach(function(x){ spentByCat[x.category] = (spentByCat[x.category]||0) + x.amount; });
     var visibleCats = CATEGORIES.filter(function(c){
       return (spentByCat[c.id] && spentByCat[c.id] > 0) || (budgets[c.id] && budgets[c.id] > 0);
     });
     if (visibleCats.length === 0){
-      receiptEl.innerHTML = '<p class="empty">Sin gastos registrados este mes.</p><div class="torn"></div>';
+      receiptEl.innerHTML = '<p class="empty">Sin gastos registrados en este periodo.</p><div class="torn"></div>';
       return;
     }
     var total = list.reduce(function(s,x){ return s + x.amount; }, 0);
@@ -475,10 +528,18 @@
   }
 
   function renderMonthLabel(){
-    var label = MESES[monthCursor.getMonth()] + ' ' + monthCursor.getFullYear();
+    var label;
+    if (PAYDAY === 1){
+      label = MESES[monthCursor.getMonth()] + ' ' + monthCursor.getFullYear();
+    } else {
+      var periodEnd = new Date(getPeriodEnd(monthCursor).getTime() - 86400000);
+      label = formatShortDate(monthCursor) + ' \u2013 ' + formatShortDate(periodEnd) + ' ' + periodEnd.getFullYear();
+    }
     monthLabel.textContent = label;
     var printTitle = document.getElementById('printTitle');
     if (printTitle) printTitle.textContent = 'CONTROL DE GASTOS \u2014 ' + label;
+    var note = document.getElementById('paydayNote');
+    if (note) note.textContent = PAYDAY === 1 ? '' : 'periodo desde tu dia de pago (dia '+PAYDAY+')';
   }
 
   function renderAll(){
@@ -491,7 +552,7 @@
 
   function renderTotalDesignated(){
     var el = document.getElementById('totalDesignated');
-    var budgets = getBudgetsForMonth(monthKey(monthCursor));
+    var budgets = getBudgetsForMonth(periodKey(monthCursor));
     var total = CATEGORIES.reduce(function(s,c){ return s + (budgets[c.id] || 0); }, 0);
     if (total === 0){
       el.textContent = 'aun no has asignado presupuesto a ninguna categoria';
@@ -503,15 +564,17 @@
   function renderAnalysis(){
     var panel = document.getElementById('analysisPanel');
     var now = new Date();
-    var isCurrent = now.getFullYear() === monthCursor.getFullYear() && now.getMonth() === monthCursor.getMonth();
+    var periodEndExclusive = getPeriodEnd(monthCursor);
+    var isCurrent = now >= monthCursor && now < periodEndExclusive;
     if (!isCurrent){
-      panel.innerHTML = '<p>El analisis de ritmo de gasto solo aplica al mes actual.</p>';
+      panel.innerHTML = '<p>El analisis de ritmo de gasto solo aplica al periodo actual.</p>';
       return;
     }
-    var dayOfMonth = now.getDate();
-    var daysInMonth = new Date(monthCursor.getFullYear(), monthCursor.getMonth()+1, 0).getDate();
+    var msPerDay = 86400000;
+    var dayOfMonth = Math.floor((now - monthCursor) / msPerDay) + 1;
+    var daysInMonth = Math.round((periodEndExclusive - monthCursor) / msPerDay);
     var list = monthExpenses();
-    var budgets = getBudgetsForMonth(monthKey(monthCursor));
+    var budgets = getBudgetsForMonth(periodKey(monthCursor));
     var spentByCat = {};
     var countByCat = {};
     list.forEach(function(x){
@@ -567,11 +630,28 @@
   }
 
   document.getElementById('prevMonth').addEventListener('click', function(){
-    monthCursor = new Date(monthCursor.getFullYear(), monthCursor.getMonth()-1, 1);
+    var pm = monthCursor.getMonth() - 1, py = monthCursor.getFullYear();
+    if (pm < 0){ pm = 11; py -= 1; }
+    monthCursor = paydayDateIn(py, pm);
     renderAll();
   });
   document.getElementById('nextMonth').addEventListener('click', function(){
-    monthCursor = new Date(monthCursor.getFullYear(), monthCursor.getMonth()+1, 1);
+    var nm = monthCursor.getMonth() + 1, ny = monthCursor.getFullYear();
+    if (nm > 11){ nm = 0; ny += 1; }
+    monthCursor = paydayDateIn(ny, nm);
+    renderAll();
+  });
+  document.getElementById('paydayBtn').addEventListener('click', function(){
+    var input = window.prompt('¿Que dia del mes recibes tu pago? (1-31). Pon 1 si prefieres usar el mes calendario normal:', String(PAYDAY));
+    if (input === null) return;
+    var n = parseInt(input.trim(), 10);
+    if (!n || n < 1 || n > 31){
+      window.alert('Ingresa un numero entre 1 y 31.');
+      return;
+    }
+    PAYDAY = n;
+    savePayday(n);
+    monthCursor = getPeriodStart(new Date());
     renderAll();
   });
   document.getElementById('clearBtn').addEventListener('click', clearForm);
