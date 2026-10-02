@@ -65,6 +65,12 @@
     text-align:center;color:var(--ink-soft);font-size:12px;font-weight:600;
     margin:0 0 16px;
   }
+  .period-settings-link{
+    display:block;width:100%;text-align:center;background:none;border:none;
+    color:var(--muted);font-size:10.5px;font-family:'IBM Plex Mono', monospace;
+    cursor:pointer;margin:-6px 0 10px;padding:2px;text-decoration:underline;
+    text-underline-offset:2px;
+  }
 
   .panel{
     background:var(--panel);border-radius:10px;padding:14px;
@@ -182,7 +188,7 @@
 
   @media print{
     body{background:#fff;padding:0;display:block;}
-    header, .month-nav, .panel, .btn-print, .analysis-panel{display:none !important;}
+    header, .month-nav, .period-settings-link, .panel, .btn-print, .analysis-panel{display:none !important;}
     .wrap{max-width:100%;}
     .receipt{box-shadow:none;padding:0;}
     .torn{display:none;}
@@ -212,6 +218,7 @@
     <span class="month-label" id="monthLabel"></span>
     <button id="nextMonth" aria-label="Mes siguiente">&#8594;</button>
   </div>
+  <button class="period-settings-link" id="periodSettingsBtn" type="button">&#9881; fecha de inicio del periodo</button>
   <p class="total-designated" id="totalDesignated"></p>
 
   <div class="panel">
@@ -267,8 +274,10 @@
     { id:'otros', label:'Otros', color:'#6B6558' }
   ];
   var MESES = ["ENERO","FEBRERO","MARZO","ABRIL","MAYO","JUNIO","JULIO","AGOSTO","SEPTIEMBRE","OCTUBRE","NOVIEMBRE","DICIEMBRE"];
+  var MESES_ABR = ["ENE","FEB","MAR","ABR","MAY","JUN","JUL","AGO","SEP","OCT","NOV","DIC"];
   var STORAGE_KEY = 'control-gastos-v1';
   var CAT_BUDGETS_KEY = 'control-gastos-cat-budgets';
+  var PERIOD_START_KEY = 'control-gastos-period-start-day';
 
   function catInfo(id){
     for (var i=0;i<CATEGORIES.length;i++) if (CATEGORIES[i].id===id) return CATEGORIES[i];
@@ -324,9 +333,60 @@
     return budgetsStore[key];
   }
 
+  function loadPeriodStartDay(){
+    try{
+      var raw = localStorage.getItem(PERIOD_START_KEY);
+      var n = raw ? parseInt(raw, 10) : 1;
+      return (n >= 1 && n <= 31) ? n : 1;
+    }catch(e){ return 1; }
+  }
+  function savePeriodStartDay(n){
+    try{ localStorage.setItem(PERIOD_START_KEY, String(n)); return true; }catch(e){ return false; }
+  }
+  function clampDay(year, month, day){
+    var last = new Date(year, month+1, 0).getDate();
+    return Math.min(day, last);
+  }
+  // Devuelve la fecha (con dia exacto) en que inicia el periodo que contiene "date",
+  // segun el dia de inicio configurado (periodStartDay). Si periodStartDay es 1,
+  // esto equivale exactamente al mes calendario de siempre.
+  function periodStartFor(date){
+    var y = date.getFullYear(), m = date.getMonth(), d = date.getDate();
+    var startDayThisMonth = clampDay(y, m, periodStartDay);
+    if (d >= startDayThisMonth){
+      return new Date(y, m, startDayThisMonth);
+    }
+    var pm = m - 1, py = y;
+    if (pm < 0){ pm = 11; py -= 1; }
+    return new Date(py, pm, clampDay(py, pm, periodStartDay));
+  }
+  // Fecha (exclusiva) en que termina el periodo que comienza en periodStart.
+  function periodEndFor(periodStart){
+    var y = periodStart.getFullYear(), m = periodStart.getMonth();
+    var nm = m + 1, ny = y;
+    if (nm > 11){ nm = 0; ny += 1; }
+    return new Date(ny, nm, clampDay(ny, nm, periodStartDay));
+  }
+  // Mueve el cursor "delta" periodos hacia adelante (o atras), realineando al
+  // dia de inicio configurado.
+  function shiftPeriod(date, delta){
+    var normalized = new Date(date.getFullYear(), date.getMonth() + delta, 1);
+    var ny = normalized.getFullYear(), nm = normalized.getMonth();
+    return new Date(ny, nm, clampDay(ny, nm, periodStartDay));
+  }
+  function formatPeriodLabel(cursor){
+    if (periodStartDay === 1){
+      return MESES[cursor.getMonth()] + ' ' + cursor.getFullYear();
+    }
+    var end = periodEndFor(cursor);
+    var lastDay = new Date(end.getFullYear(), end.getMonth(), end.getDate() - 1);
+    return cursor.getDate()+' '+MESES_ABR[cursor.getMonth()]+' – '+lastDay.getDate()+' '+MESES_ABR[lastDay.getMonth()]+' '+lastDay.getFullYear();
+  }
+
   var expenses = loadExpenses();
   var budgetsStore = loadBudgetsStore();
-  var monthCursor = new Date(); monthCursor.setDate(1);
+  var periodStartDay = loadPeriodStartDay();
+  var monthCursor = periodStartFor(new Date());
   var selectedCategory = 'comida';
 
   var descInput = document.getElementById('descInput');
@@ -341,7 +401,7 @@
     var budgets = getBudgetsForMonth(key);
     var c = catInfo(catId);
     var current = budgets[catId];
-    var input = window.prompt('Presupuesto para '+c.label+' en '+MESES[monthCursor.getMonth()]+' (deja vacio para quitar el limite):', current ? String(current) : '');
+    var input = window.prompt('Presupuesto para '+c.label+' en '+formatPeriodLabel(monthCursor)+' (deja vacio para quitar el limite):', current ? String(current) : '');
     if (input === null) return;
     if (input.trim() === ''){
       delete budgets[catId];
@@ -413,9 +473,11 @@
   }
 
   function monthExpenses(){
+    var start = monthCursor;
+    var end = periodEndFor(monthCursor);
     return expenses.filter(function(x){
       var d = new Date(x.date);
-      return d.getFullYear() === monthCursor.getFullYear() && d.getMonth() === monthCursor.getMonth();
+      return d >= start && d < end;
     }).sort(function(a,b){ return new Date(b.date) - new Date(a.date); });
   }
 
@@ -487,7 +549,7 @@
   }
 
   function renderMonthLabel(){
-    var label = MESES[monthCursor.getMonth()] + ' ' + monthCursor.getFullYear();
+    var label = formatPeriodLabel(monthCursor);
     monthLabel.textContent = label;
     var printTitle = document.getElementById('printTitle');
     if (printTitle) printTitle.textContent = 'CONTROL DE GASTOS \u2014 ' + label;
@@ -515,13 +577,15 @@
   function renderAnalysis(){
     var panel = document.getElementById('analysisPanel');
     var now = new Date();
-    var isCurrent = now.getFullYear() === monthCursor.getFullYear() && now.getMonth() === monthCursor.getMonth();
+    var periodStart = monthCursor;
+    var periodEnd = periodEndFor(monthCursor);
+    var isCurrent = now >= periodStart && now < periodEnd;
     if (!isCurrent){
-      panel.innerHTML = '<p>El analisis de ritmo de gasto solo aplica al mes actual.</p>';
+      panel.innerHTML = '<p>El analisis de ritmo de gasto solo aplica al periodo actual.</p>';
       return;
     }
-    var dayOfMonth = now.getDate();
-    var daysInMonth = new Date(monthCursor.getFullYear(), monthCursor.getMonth()+1, 0).getDate();
+    var dayOfMonth = Math.floor((now - periodStart) / 86400000) + 1;
+    var daysInMonth = Math.round((periodEnd - periodStart) / 86400000);
     var list = monthExpenses();
     var budgets = getBudgetsForMonth(monthKey(monthCursor));
     var spentByCat = {};
@@ -579,11 +643,24 @@
   }
 
   document.getElementById('prevMonth').addEventListener('click', function(){
-    monthCursor = new Date(monthCursor.getFullYear(), monthCursor.getMonth()-1, 1);
+    monthCursor = shiftPeriod(monthCursor, -1);
     renderAll();
   });
   document.getElementById('nextMonth').addEventListener('click', function(){
-    monthCursor = new Date(monthCursor.getFullYear(), monthCursor.getMonth()+1, 1);
+    monthCursor = shiftPeriod(monthCursor, 1);
+    renderAll();
+  });
+  document.getElementById('periodSettingsBtn').addEventListener('click', function(){
+    var input = window.prompt('Dia del mes en que comienza tu periodo de gastos (1-31). Por ejemplo, si te pagan el 25, escribe 25 para que el periodo corra del 25 al 24 del siguiente mes. Escribe 1 para volver al mes calendario normal:', String(periodStartDay));
+    if (input === null) return;
+    var value = parseInt(String(input).trim(), 10);
+    if (!value || value < 1 || value > 31){
+      window.alert('Ingresa un numero entre 1 y 31.');
+      return;
+    }
+    periodStartDay = value;
+    savePeriodStartDay(value);
+    monthCursor = periodStartFor(new Date());
     renderAll();
   });
   document.getElementById('clearBtn').addEventListener('click', clearForm);
